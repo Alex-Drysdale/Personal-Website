@@ -1,0 +1,86 @@
+body {
+    background-color: lightgrey;
+    margin: 0;
+    font-family: Arial;
+    color: teal;
+    line-height: 1.6;
+}
+
+h3 {
+    color: white;
+    font-family: Arial ;
+}
+
+
+.name-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.name-block h3,
+.name-block .tagline {
+    margin: 0;
+    line-height: 1;
+}
+
+.name-block .tagline {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+}
+
+/* ensure logo and left group align vertically */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* simple circular logo */
+.logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+}
+
+/* nav stays on the right and links inline */
+header { /* keep existing header flex rules but ensure centering */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: teal;
+    color: white;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+}
+
+.header-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+}
+
+.header-nav a {
+    color: white;
+    text-decoration: none;
+    padding: 0.25rem 0.4rem;
+}
+    
+.header-nav ul li {
+    display: inline-block;
+}

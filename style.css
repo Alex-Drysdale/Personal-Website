@@ -84,3 +84,19 @@ header { /* keep existing header flex rules but ensure centering */
 .header-nav ul li {
     display: inline-block;
 }
+
+/* Centre stage */
+
+.main-holder{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.profile-img {
+    display: block;
+    padding: 100px;
+    border-radius: 60%;
+
+}

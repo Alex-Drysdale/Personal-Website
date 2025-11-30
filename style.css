@@ -97,6 +97,6 @@ header { /* keep existing header flex rules but ensure centering */
 .profile-img {
     display: block;
     padding: 100px;
-    border-radius: 60%;
+    border-radius: 50%;
 
 }

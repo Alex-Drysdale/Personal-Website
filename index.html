@@ -6,24 +6,37 @@
     <title>Xandi Portfolio Website</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="img/PNG" href="assets/arhol.PNG">
+    <script src="./scripts.js"></script>
 </head>
 <body>
      <!--content here-->
         <header>
-            <div class="header-left">
-                <img src="assets/arhol.PNG" alt="Logo" class="logo-img" width="50" height="50">
-                <div class="name-block">
-                    <h3>Xandi Drysdale</h3>
-                    <p class="tagline">- A Curious Individual</p>
+            <a href="#" class="logo-holder">
+                <div class="logo">
+                    <img src="assets/arhol.PNG" width="50" height="50">
                 </div>
-            </div>
-            <nav class="header-nav">
-                <ul>
-                    <li><a href="index.html" aria-current="page">Home</a></li>
-                    <li><a href="cv.html">CV</a></li>
-                    <li><a href="projects.html">Projects</a></li>
-                    <li><a href="#">Contact</a></li>
+                <div class="logo-text">Portfolio Website</div>
+            </a>
+            <nav>
+                <ul id="menu">
+                    <li>
+                        <a href="#">Home</a>
+                    </li>
+                    <li>
+                        <a href="#">CV</a>
+                    </li>
+                    <li>
+                        <a href="#">Projects</a>
+                    </li>
+                    <li>
+                        <a href="#">Contact</a>
+                    </li>
                 </ul>
+                <a href="#" class="mobile-toggle" onClick="toggleMobileMenu();">
+                    <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/>
+                    </svg>
+                </a>
             </nav>
         </header>
         <main>
@@ -32,12 +45,14 @@
                     <img src="assets/LinkedIn.jpeg"  class ="profile-img" alt="Profile Photo" width="300" height="400">
                 </div>
                 <div class="intro">
-                    <h2 class="main-text">Hello</h2>
-                    <h4 class="main-text">About Me:</h4>
-                    <p class="main-text">I'm Xandi and I'd like my work to mean something.</p>
+                    <div class="main-text-holder">
+                        <h2 class="main-text">Hello</h2>
+                        <h4 class="main-text">About Me:</h4>
+                        <p class="main-text">I'm Xandi and I'd like my work to mean something.</p>
+                    </div>
                     <div class="hero-buttons">
-                        <a href="cv.html" class="button">CV</a>
-                        <a href="projects.html" class="button">Projects</a>
+                        <a href="#" class="button">CV</a>
+                        <a href="#" class="button">Projects</a>
                         <a href="#" class="button">Contact</a>
                     </div>
                 </div>

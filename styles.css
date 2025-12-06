@@ -31,8 +31,7 @@ body {
     font-optical-sizing: auto;
     font-style: normal;
     font-size: 20px;
-    margin: 0;
-    padding: 0;
+
 }
 
 a {
@@ -133,53 +132,66 @@ header {
 
 
 /* Centre stage */
+/* MAIN LAYOUT */
 main {
-    background-color: var(--base-100);
+  background-color: var(--base-100);
 }
 
-.main-holder{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-}
-
-.profile-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    transform: scale(2);
-}
-
-.photo {
-    width: 350px;
-    height: 470px;
-    overflow: hidden;
-    border-radius: 50%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-right: 50px;
-}
-
-.main-text-holder {
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 1rem;
-}
-
-.main-text {
-    color: var(--orange-600);
-    font-weight: 800;
-
-}
-
-.hero-button {
-  padding-top: 50px;
+/* Outer hero container */
+.main-holder {
+  max-width: 1100px;
   margin: 0 auto;
-  width: 100%;
-  text-align: center;
+  padding: 4rem 2rem;
+  display: flex;
+  gap: 4rem;
+  align-items: center;
 }
+
+/* Photo column */
+.photo {
+  flex: 0 0 260px;             /* fixed-ish width on desktop */
+  aspect-ratio: 3 / 4;         /* keeps it portrait */
+  border-radius: 50%;          /* circle/oval frame */
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Actual image */
+.profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;           /* fills the frame without distortion */
+  object-position: 50% 25%;    /* adjust to keep your face centred */
+}
+
+/* Text column */
+.intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  color: var(--orange-600);
+  font-weight: 600;
+}
+
+/* Text block in intro */
+.main-text-holder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Buttons row */
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Re-use your .button styles – they already look nice */
+
+
+
 
 .button {
   display: inline-block;
@@ -211,6 +223,24 @@ main {
   transform: translateY(0);
 }
 
+@media (max-width: 768px) {
+  .main-holder {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .photo {
+    flex: 0 0 auto;
+    width: 60vw;          /* scale photo with viewport */
+    max-width: 260px;
+    margin: 0 auto;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+}
 
 
 

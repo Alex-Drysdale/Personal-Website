@@ -38,6 +38,8 @@
       transition: color .2s;
     }
     .back:hover { color: var(--terra); }
+    .back { animation: fadeIn 0.4s ease both; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* ── GRID ── */
     .grid {
@@ -64,12 +66,18 @@
       position: relative; overflow: hidden;
       transition: transform .2s cubic-bezier(.22,.68,0,1.2),
                   box-shadow .2s ease;
+      animation: cardIn 0.55s cubic-bezier(.22,.68,0,1.15) both;
     }
-    .proj-card:nth-child(1)  { transform: rotate(-.3deg); }
-    .proj-card:nth-child(2)  { transform: rotate( .4deg); }
-    .proj-card:nth-child(3)  { transform: rotate(-.2deg); }
-    .proj-card:nth-child(4)  { transform: rotate( .3deg); }
-    .proj-card:nth-child(5)  { transform: rotate(-.4deg); }
+    .proj-card:nth-child(1)  { --r: -.3deg; animation-delay: 0.05s; }
+    .proj-card:nth-child(2)  { --r:  .4deg; animation-delay: 0.12s; }
+    .proj-card:nth-child(3)  { --r: -.2deg; animation-delay: 0.19s; }
+    .proj-card:nth-child(4)  { --r:  .3deg; animation-delay: 0.26s; }
+    .proj-card:nth-child(5)  { --r: -.4deg; animation-delay: 0.33s; }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(18px) rotate(var(--r, 0deg)) scale(0.96); }
+      to   { opacity: 1; }
+    }
 
     .proj-card:hover {
       transform: rotate(0deg) translateY(-4px) scale(1.01) !important;

@@ -148,20 +148,11 @@
     /* Leaf clusters */
     .sign-leaves { position: absolute; top: -20px; left: 0; width: 300px; height: 40px; overflow: visible; pointer-events: none; }
 
-    /* Second sign unfold */
+    /* Second sign — starts hidden, GSAP animates it */
     .sign2-wrap {
       transform-origin: top center;
       transform: rotateX(-105deg);
       opacity: 0;
-    }
-    .sign2-wrap.unfolded {
-      animation: unfold .55s cubic-bezier(.34,1.25,.64,1) forwards;
-    }
-    @keyframes unfold {
-      0%   { transform: rotateX(-105deg); opacity: .15; }
-      60%  { transform: rotateX(10deg);   opacity: 1; }
-      80%  { transform: rotateX(-4deg); }
-      100% { transform: rotateX(0deg);    opacity: 1; }
     }
   </style>
 </head>
@@ -463,6 +454,7 @@
 
 </div>
 
+<script src="assets/js/gsap.min.js"></script>
 <script>
   // ── Parallax (all cards) ──
   const allCards = document.querySelectorAll('.card');
@@ -480,7 +472,8 @@
   });
 
   // ═══════════════════════════════════════════════════════
-  //  CONTACT SIGN ANIMATION
+  //  CONTACT SIGN ANIMATION  (GSAP-powered)
+  //  Fires once per page load. Refresh to replay.
   // ═══════════════════════════════════════════════════════
   const contactCard = document.getElementById('contactCard');
   const signEl      = document.getElementById('signPanel');
@@ -491,17 +484,13 @@
     R: ['rR0','rR1','rR2','rR3','rR4'].map(id => document.getElementById(id)),
   };
 
-  // Animation fires once per page load. Refresh to replay.
-
-  // Dynamic layout — recomputed on resize
+  // ── Layout constants ──
   const SIGN_W = 300;
-  let CW, CH, HOOK_L, HOOK_R, PEND_X, PEND_Y, PEND_LEN, EQUIL_CX, EQUIL_CY, THROW_START_CY, SIGN_SCALE;
-  const THROW_PEAK_CY = -60;
-  const THROW_DUR     = 850;
-  const G             = 900;
-  const PEND_DAMP     = 1.25;
   const RING_L_BASE = { lx: 16 - 150, ly: 14 - 42 };
   const RING_R_BASE = { lx: 284 - 150, ly: 14 - 42 };
+
+  let CW, CH, HOOK_L, HOOK_R, PEND_X, PEND_Y, PEND_LEN,
+      EQUIL_CX, EQUIL_CY, THROW_START_CY, SIGN_SCALE;
 
   function measure() {
     CW = contactCard.offsetWidth;
@@ -520,23 +509,18 @@
   measure();
   window.addEventListener('resize', measure);
 
-  let signCX = EQUIL_CX, signCY = EQUIL_CY, signRot = 0;
-  let pendTheta = 0, pendOmega = 0;
-  const RS = { L: { x:0, v:0, k:115, d:11 }, R: { x:0, v:0, k:105, d:10 } };
-  let phase = 'idle', throwT0 = 0, lastTs = 0, rafId = null;
+  // ── Animatable state object — GSAP tweens these values directly ──
+  const sign = { cx: EQUIL_CX, cy: EQUIL_CY, rot: 0, scale: 1, rotX: 0, opacity: 0 };
+  const ropeSpring = { L: 0, R: 0 };
 
-  function stepSpring(r, dt, target) {
-    r.v += ((target - r.x) * r.k - r.v * r.d) * dt;
-    r.x += r.v * dt;
-  }
-
+  // ── Render helpers (same geometry, but now driven by GSAP) ──
   function getRings() {
-    const c = Math.cos(signRot), s = Math.sin(signRot);
+    const c = Math.cos(sign.rot), s = Math.sin(sign.rot);
     const lL = { lx: RING_L_BASE.lx * SIGN_SCALE, ly: RING_L_BASE.ly * SIGN_SCALE };
     const lR = { lx: RING_R_BASE.lx * SIGN_SCALE, ly: RING_R_BASE.ly * SIGN_SCALE };
     return {
-      L: { x: signCX + lL.lx*c - lL.ly*s, y: signCY + lL.lx*s + lL.ly*c },
-      R: { x: signCX + lR.lx*c - lR.ly*s, y: signCY + lR.lx*s + lR.ly*c }
+      L: { x: sign.cx + lL.lx*c - lL.ly*s, y: sign.cy + lL.lx*s + lL.ly*c },
+      R: { x: sign.cx + lR.lx*c - lR.ly*s, y: sign.cy + lR.lx*s + lR.ly*c }
     };
   }
 
@@ -551,111 +535,111 @@
     return `M${hook.x.toFixed(1)},${hook.y.toFixed(1)} C${p1x.toFixed(1)},${p1y.toFixed(1)} ${p2x.toFixed(1)},${p2y.toFixed(1)} ${ring.x.toFixed(1)},${ring.y.toFixed(1)}`;
   }
 
-  function updateRopes() {
+  function render() {
+    const sc = sign.scale * SIGN_SCALE;
+    signEl.style.opacity = sign.opacity;
+    signEl.style.transform =
+      `translate(${(sign.cx - 150).toFixed(2)}px, ${(sign.cy - 42).toFixed(2)}px) ` +
+      `scale(${sc.toFixed(3)}) rotateX(${sign.rotX.toFixed(1)}deg) rotate(${sign.rot.toFixed(5)}rad)`;
+    if (sc > 0.7 * SIGN_SCALE) signEl.style.zIndex = '30';
     const rings = getRings();
-    const pL = buildRope(HOOK_L, rings.L, RS.L.x);
-    const pR = buildRope(HOOK_R, rings.R, RS.R.x);
+    const pL = buildRope(HOOK_L, rings.L, ropeSpring.L);
+    const pR = buildRope(HOOK_R, rings.R, ropeSpring.R);
     ropePaths.L.forEach(el => el.setAttribute('d', pL));
     ropePaths.R.forEach(el => el.setAttribute('d', pR));
   }
 
-  function updateSign(opacity, scale, rotX) {
-    signEl.style.opacity = opacity !== undefined ? opacity : 1;
-    const sc = (scale || 1) * SIGN_SCALE, rx = rotX || 0;
-    signEl.style.transform =
-      `translate(${(signCX - 150).toFixed(2)}px, ${(signCY - 42).toFixed(2)}px) ` +
-      `scale(${sc.toFixed(3)}) rotateX(${rx.toFixed(1)}deg) rotate(${signRot.toFixed(5)}rad)`;
-    if (sc > 0.7 * SIGN_SCALE) signEl.style.zIndex = '30';
-  }
+  // ── Build the GSAP timeline (paused — triggered on click) ──
+  let fired = false;
 
-  function throwCY(t) {
-    if (t < 0.45) {
-      const s = t / 0.45, e = 1 - (1-s)*(1-s);
-      return THROW_START_CY + (THROW_PEAK_CY - THROW_START_CY) * e;
-    }
-    const s = (t - 0.45) / 0.55;
-    const e = s < 0.85 ? s*s*1.05 : 1 + 0.04*Math.sin((s-0.85)/0.15*Math.PI)*(1-s);
-    return THROW_PEAK_CY + (EQUIL_CY - THROW_PEAK_CY) * Math.min(e, 1.01);
-  }
+  function buildTimeline() {
+    measure();
+    const tl = gsap.timeline({
+      onUpdate: render,
+      defaults: { ease: 'none' }
+    });
 
-  function throwScale(t) {
-    if (t < 0.15) { const s = t/0.15; return 0.3 + 0.7*s*s; }
-    if (t < 0.5) { return 1.0 + 0.08*Math.sin((t-0.15)/0.35*Math.PI); }
-    return 1.0 + 1.08*(1-(t-0.5)/0.5)*0.02;
-  }
+    // 1) THROW — sign rises from behind the card
+    //    Starts invisible at bottom, arcs up past the top, settles at equilibrium
+    tl.set(sign, { cx: EQUIL_CX, cy: THROW_START_CY, rot: 0, scale: 0.3, rotX: -70, opacity: 0 });
 
-  function throwRotX(t) {
-    if (t < 0.12) { const s = t/0.12; return -70 + 70*s*s; }
-    if (t < 0.5) { return 12*Math.sin((t-0.12)/0.38*Math.PI); }
-    return 8*(1 - (1-((1-(t-0.5)/0.5))*(1-((t-0.5)/0.5))) ? 0 : 1);
-  }
+    // Fade in quickly
+    tl.to(sign, { opacity: 1, duration: 0.08, ease: 'power1.in' }, 0);
 
-  function throwRotXFn(t) {
-    if (t < 0.12) { const s = t/0.12; return -70 + 70*s*s; }
-    if (t < 0.5)  { return 12 * Math.sin((t-0.12)/0.38 * Math.PI); }
-    const s = (t-0.5)/0.5, e = 1-(1-s)*(1-s);
-    return 8*(1 - e);
-  }
+    // Scale up — fast burst then slight overshoot
+    tl.to(sign, { scale: 1, duration: 0.5, ease: 'back.out(1.4)' }, 0);
 
-  function tick(ts) {
-    const dt = Math.min((ts - lastTs) / 1000, 0.05);
-    lastTs = ts;
+    // 3D rotation — flip from behind to face-on
+    tl.to(sign, { rotX: 0, duration: 0.55, ease: 'power3.out' }, 0);
 
-    if (phase === 'throw') {
-      const raw = Math.min((ts - throwT0) / THROW_DUR, 1);
-      signCY = throwCY(raw);
-      signCX = EQUIL_CX + (1-raw)*3*Math.sin(raw*Math.PI);
-      signRot = 0;
-      const sc = throwScale(raw), rx = throwRotXFn(raw);
-      const op = raw < 0.08 ? raw/0.08 : 1;
-      const w = Math.max(0, 1-raw*2)*15, ph = raw*7;
-      stepSpring(RS.L, dt,  w*Math.sin(ph));
-      stepSpring(RS.R, dt, -w*Math.sin(ph+0.7));
-      updateSign(op, sc, rx);
-      updateRopes();
-      if (raw >= 1) {
-        phase = 'pendulum';
-        signCX = EQUIL_CX; signCY = EQUIL_CY;
-        pendTheta = 0.12; pendOmega = -1.2;
-        RS.L.v += 18; RS.R.v -= 14;
-        signEl.classList.add('active');
-        setTimeout(() => sign2El.classList.add('unfolded'), 480);
+    // Vertical arc — rise up past top then settle down to equilibrium
+    tl.to(sign, { cy: -60, duration: 0.38, ease: 'power2.out' }, 0);
+    tl.to(sign, { cy: EQUIL_CY, duration: 0.5, ease: 'bounce.out' }, 0.38);
+
+    // Subtle horizontal wobble during throw
+    tl.to(sign, { cx: EQUIL_CX + 5, duration: 0.22, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+
+    // Rope wobble during throw
+    tl.fromTo(ropeSpring, { L: 12, R: -10 }, { L: 0, R: 0, duration: 0.7, ease: 'elastic.out(1, 0.3)' }, 0.05);
+
+    // 2) PENDULUM SWING — after the throw lands
+    const pendStart = 0.88;
+
+    // Swing right, then left, dampening — using elastic ease
+    tl.to(sign, {
+      cx: EQUIL_CX,
+      duration: 2.2,
+      ease: 'elastic.out(1, 0.28)',
+      onStart: () => {
+        sign.cx = EQUIL_CX + PEND_LEN * Math.sin(0.12);
       }
-    } else if (phase === 'pendulum') {
-      const alpha = -(G/PEND_LEN)*Math.sin(pendTheta) - PEND_DAMP*pendOmega;
-      pendOmega += alpha*dt;
-      pendTheta += pendOmega*dt;
-      signCX = PEND_X + PEND_LEN*Math.sin(pendTheta);
-      signCY = PEND_Y + PEND_LEN*Math.cos(pendTheta);
-      signRot = pendTheta * 0.22;
-      const lat = -pendOmega * 20;
-      stepSpring(RS.L, dt, lat);
-      stepSpring(RS.R, dt, lat*0.88);
-      updateSign(1);
-      updateRopes();
-      // Settle detection — stop RAF when motion is negligible
-      if (Math.abs(pendOmega) < 0.01 && Math.abs(pendTheta) < 0.005) {
-        phase = 'done';
-        signCX = EQUIL_CX; signCY = EQUIL_CY; signRot = 0;
-        updateSign(1); updateRopes();
-        return; // stop RAF
-      }
-    }
-    if (phase !== 'idle' && phase !== 'done') rafId = requestAnimationFrame(tick);
+    }, pendStart);
+
+    // Sign rocks side to side (rotation mirrors the swing)
+    tl.fromTo(sign, { rot: 0.025 }, {
+      rot: 0,
+      duration: 2.2,
+      ease: 'elastic.out(1, 0.28)',
+    }, pendStart);
+
+    // Rope springs react to swing
+    tl.fromTo(ropeSpring,
+      { L: 18, R: -14 },
+      { L: 0, R: 0, duration: 2.0, ease: 'elastic.out(1, 0.25)' },
+      pendStart
+    );
+
+    // Subtle vertical bounce during pendulum
+    tl.fromTo(sign,
+      { cy: EQUIL_CY - 3 },
+      { cy: EQUIL_CY, duration: 1.8, ease: 'elastic.out(1, 0.3)' },
+      pendStart
+    );
+
+    // 3) ENABLE INTERACTION + UNFOLD LINKEDIN SIGN
+    tl.call(() => {
+      signEl.classList.add('active');
+    }, null, pendStart + 0.1);
+
+    // LinkedIn sign unfolds with GSAP instead of CSS animation
+    tl.fromTo(sign2El,
+      { rotateX: -105, opacity: 0 },
+      { rotateX: 0, opacity: 1, duration: 0.6, ease: 'back.out(1.8)' },
+      pendStart + 0.5
+    );
+
+    return tl;
   }
 
+  // ── Click handler — fire once ──
   contactCard.addEventListener('click', e => {
     if (e.target.closest('.sign2-wrap')) return;
-    if (phase !== 'idle') return; // fire once only
+    if (fired) return;
+    fired = true;
     measure();
-    phase = 'throw';
-    throwT0 = performance.now(); lastTs = throwT0;
-    signCY = THROW_START_CY; signCX = EQUIL_CX; signRot = 0;
-    signEl.style.zIndex = '5'; signEl.style.opacity = '0';
-    RS.L.x = 0; RS.L.v = 50; RS.R.x = 0; RS.R.v = 50;
-    sign2El.classList.remove('unfolded'); sign2El.style.transform = '';
     contactCard.classList.add('active');
-    rafId = requestAnimationFrame(ts => { lastTs = ts; rafId = requestAnimationFrame(tick); });
+    signEl.style.zIndex = '5';
+    buildTimeline().play();
   });
 </script>
 </body>

@@ -66,18 +66,14 @@
       position: relative; overflow: hidden;
       transition: transform .2s cubic-bezier(.22,.68,0,1.2),
                   box-shadow .2s ease;
-      animation: cardIn 0.55s cubic-bezier(.22,.68,0,1.15) both;
+      opacity: 0;
+      visibility: hidden;
     }
-    .proj-card:nth-child(1)  { --r: -.3deg; animation-delay: 0.05s; }
-    .proj-card:nth-child(2)  { --r:  .4deg; animation-delay: 0.12s; }
-    .proj-card:nth-child(3)  { --r: -.2deg; animation-delay: 0.19s; }
-    .proj-card:nth-child(4)  { --r:  .3deg; animation-delay: 0.26s; }
-    .proj-card:nth-child(5)  { --r: -.4deg; animation-delay: 0.33s; }
-
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(18px) rotate(var(--r, 0deg)) scale(0.96); }
-      to   { opacity: 1; }
-    }
+    .proj-card:nth-child(1)  { --r: -.3deg; }
+    .proj-card:nth-child(2)  { --r:  .4deg; }
+    .proj-card:nth-child(3)  { --r: -.2deg; }
+    .proj-card:nth-child(4)  { --r:  .3deg; }
+    .proj-card:nth-child(5)  { --r: -.4deg; }
 
     .proj-card:hover {
       transform: rotate(0deg) translateY(-4px) scale(1.01) !important;
@@ -317,6 +313,7 @@
   </div>
 </div>
 
+<script src="assets/js/gsap.min.js"></script>
 <script>
 const PROJECTS = [
   {
@@ -454,6 +451,77 @@ mBackdrop.addEventListener('click', closeModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
+
+// ── MAGNETIC SCATTER ANIMATION ───────────────────
+(function() {
+  const cards = document.querySelectorAll('.proj-card');
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Scatter cards within the visible viewport, offset from their grid positions
+  // These are relative offsets — small enough to stay on-screen
+  const scatterOffsets = [
+    { x: -180, y:  120, r: -25, s: 0.75 },
+    { x:  200, y:  100, r:  30, s: 0.7  },
+    { x:  160, y: -80,  r:  20, s: 0.72 },
+    { x: -140, y: -100, r: -18, s: 0.68 },
+    { x:  100, y:  60,  r:  35, s: 0.7  },
+  ];
+
+  // Make cards visible but scatter them near center of viewport
+  cards.forEach((card, i) => {
+    const rect = card.getBoundingClientRect();
+    const off = scatterOffsets[i % scatterOffsets.length];
+    // Push cards toward viewport center + offset, so all are visible
+    const centerPullX = (vw / 2 - rect.left - rect.width / 2) * 0.5;
+    const centerPullY = (vh / 2 - rect.top - rect.height / 2) * 0.4;
+    gsap.set(card, {
+      visibility: 'visible',
+      opacity: 0.7,
+      x: centerPullX + off.x + (Math.random() - 0.5) * 60,
+      y: centerPullY + off.y + (Math.random() - 0.5) * 60,
+      rotation: off.r + (Math.random() - 0.5) * 15,
+      scale: off.s,
+    });
+  });
+
+  // Brief pause showing chaos, then snap into grid
+  const tl = gsap.timeline({ delay: 0.15 });
+
+  // Small initial drift — cards float slightly while scattered
+  cards.forEach((card, i) => {
+    tl.to(card, {
+      duration: 0.3,
+      x: '+=' + ((Math.random() - 0.5) * 30),
+      y: '+=' + ((Math.random() - 0.5) * 20),
+      rotation: '+=' + ((Math.random() - 0.5) * 8),
+      ease: 'sine.inOut',
+    }, 0);
+  });
+
+  // Magnetic snap — all cards pull into position
+  cards.forEach((card, i) => {
+    tl.to(card, {
+      duration: 0.9,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      opacity: 1,
+      ease: 'elastic.out(0.8, 0.45)',
+      delay: i * 0.08,
+    }, 0.35);
+  });
+
+  // Subtle settle — tiny overshoot correction
+  cards.forEach((card, i) => {
+    tl.to(card, {
+      duration: 0.3,
+      boxShadow: '3px 4px 0 rgba(0,0,0,.18)',
+      ease: 'power2.out',
+    }, 1.2 + i * 0.05);
+  });
+})();
 </script>
 </body>
 </html>
